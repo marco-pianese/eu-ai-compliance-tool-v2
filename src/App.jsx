@@ -118,7 +118,6 @@ function deriveArticleIds(riskTier, answers = {}) {
     "llm", "base model", "pretrained model",
   ].some((k) => text.includes(k));
 
-  if (riskTier === "GPAI") return [...ARTICLES_BY_TIER.GPAI, "art5", "art99"];
   const ids = [...(ARTICLES_BY_TIER[riskTier] || ARTICLES_BY_TIER.MINIMAL)];
   if (isGpai) {
     ARTICLES_BY_TIER.GPAI.forEach((id) => { if (!ids.includes(id)) ids.push(id); });
@@ -838,6 +837,12 @@ Summary: ${a.summary}
 Key Obligations: ${a.keyObligations.join("; ")}
 Application Date: ${a.applicationDate}
 `).join("\n---\n")}`;
+
+  // ─── Phase 2.2: Token Budget Log ─────────────────────────────────────────
+  const charCount = userMessage.length;
+  const estimatedTokens = Math.round(charCount / 4);
+  console.log(`[Phase 2.2] Tier: ${articleIds.length} articles | ${charCount} chars | ~${estimatedTokens} tokens`);
+  // ─────────────────────────────────────────────────────────────────────────
 
   const response = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
