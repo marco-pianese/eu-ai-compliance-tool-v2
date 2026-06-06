@@ -450,7 +450,7 @@ export default function App() {
       await new Promise((r) => setTimeout(r, 700));
       setCurrentStep("gap");
       const riskTier = riskPreview?.tier || "HIGH";
-      const articleIds = deriveArticleIds(riskTier.tier, answers);
+      const articleIds = deriveArticleIds(riskTier, answers);
       const data = await runGapAnalysis(answers, articleIds, apiKey);
       setResult(data);
       setPhase("result");
