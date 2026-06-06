@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ARTICLES, EU_AI_ACT_META } from "./data/articles.js";
+import { ARTICLES, EU_AI_ACT_META, ARTICLES_BY_TIER } from "./data/articles.js";
 
 // ─── Design Tokens ────────────────────────────────────────────────────────────
 const C = {
@@ -104,12 +104,18 @@ function inferRiskTier(answers) {
   return               { tier: "MINIMAL",            confidence: "LOW", label: "Minimal Risk (unconfirmed)", color: C.green };
 }
 
-function deriveArticleIds(riskTier) {
-  const base = ["art5", "art13"];
-  const highRisk = ["art6", "art9", "art10", "art14", "art17", "art43", "art72", "art99"];
-  if (riskTier === "UNACCEPTABLE" || riskTier === "HIGH") return [...base, ...highRisk];
-  if (riskTier === "LIMITED") return [...base, "art50"];
-  return base;
+function deriveArticleIds(riskTier, answers = {}) {
+  const text = Object.values(answers).join(" ").toLowerCase();
+  const isGpai = [
+    "general purpose", "foundation model", "gpai", "large language model",
+    "llm", "base model", "pretrained model",
+  ].some((k) => text.includes(k));
+
+  const ids = [...(ARTICLES_BY_TIER[riskTier] || ARTICLES_BY_TIER.MINIMAL)];
+  if (isGpai) {
+    ARTICLES_BY_TIER.GPAI.forEach((id) => { if (!ids.includes(id)) ids.push(id); });
+  }
+  return ids;
 }
 
 // ─── Showcase: pre-computed result ───────────────────────────────────────────
@@ -437,7 +443,7 @@ export default function App() {
       await new Promise((r) => setTimeout(r, 700));
       setCurrentStep("gap");
       const riskTier = riskPreview?.tier || "HIGH";
-      const articleIds = deriveArticleIds(riskTier);
+      const articleIds = deriveArticleIds(riskTier.tier, answers);
       const data = await runGapAnalysis(answers, articleIds, apiKey);
       setResult(data);
       setPhase("result");
