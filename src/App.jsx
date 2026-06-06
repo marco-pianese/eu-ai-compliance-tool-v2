@@ -125,7 +125,7 @@ function deriveArticleIds(riskTier, answers = {}) {
   return ids;
 }
 
-// ─── Showcase: pre-computed result ───────────────────────────────────────────
+// ─── Showcase: pre-computed results ──────────────────────────────────────────
 const SHOWCASE_RESULT = {
   classification: {
     systemType: "AI-Powered CV Screening & Candidate Ranking SaaS",
@@ -157,6 +157,38 @@ const SHOWCASE_RESULT = {
     { articleId: "art43", articleNumber: "Article 43", gapLevel: "HIGH", gapTitle: "Conformity Assessment Not Initiated", gapDescription: "No conformity assessment procedure has been initiated. For high-risk AI systems in employment, this is a mandatory pre-market requirement.", actions: [{ priority: "HIGH", action: "Initiate conformity assessment — determine self-assessment eligibility or identify applicable notified body", deadline: "BEFORE_2026-08-02" }], estimatedEffort: "HIGH" },
     { articleId: "art17", articleNumber: "Article 17", gapLevel: "LOW", gapTitle: "Quality Management System Partially Documented", gapDescription: "Basic QMS exists covering standard software development practices. AI-specific quality processes are not yet formalized.", actions: [{ priority: "LOW", action: "Extend QMS to cover AI-specific lifecycle: model versioning policy, retraining triggers, performance threshold definitions", deadline: "BEFORE_2026-08-02" }], estimatedEffort: "MEDIUM" },
     { articleId: "art72", articleNumber: "Article 72", gapLevel: "LOW", gapTitle: "Post-Market Monitoring Plan Missing", gapDescription: "No post-market monitoring plan documented. For high-risk AI, providers must proactively collect and review performance data.", actions: [{ priority: "MEDIUM", action: "Draft and implement a post-market monitoring plan with KPIs, review cadence, and incident reporting procedure", deadline: "ONGOING" }], estimatedEffort: "MEDIUM" },
+  ],
+};
+
+const SHOWCASE_GPAI_RESULT = {
+  classification: {
+    systemType: "General Purpose Large Language Model — API Provider",
+    riskCategory: "GPAI",
+    riskRationale: "The system is a large language model made available via API to third-party developers and businesses. Under the EU AI Act, GPAI models are subject to specific obligations under Articles 51–55, including transparency to downstream providers, copyright policy disclosure, and — for models with systemic risk — additional adversarial testing and incident reporting requirements.",
+    sector: "Artificial Intelligence / Foundation Model Infrastructure",
+    affectedPersons: "Downstream developers, businesses integrating the model, and end users of downstream applications",
+  },
+  complianceScore: 58,
+  overallReadiness: "PARTIALLY_COMPLIANT",
+  executiveSummary: "The GPAI provider has established foundational technical infrastructure but lacks formal compliance documentation required under Articles 51–55 of the EU AI Act. Key gaps include absence of a published copyright policy, incomplete technical documentation for downstream integrators, and no documented systemic risk self-assessment. These gaps are remediable but require structured effort before the August 2026 deadline.",
+  redFlags: [
+    "No copyright and data provenance policy published — mandatory for all GPAI model providers under Article 53",
+    "Systemic risk classification not assessed — models above 10^25 FLOPs threshold trigger additional obligations under Article 55",
+  ],
+  priorityActions: [
+    { priority: "HIGH", action: "Publish a copyright policy documenting training data sources and compliance with EU copyright law per Article 53(1)(c)", deadline: "BEFORE_2026-08-02" },
+    { priority: "HIGH", action: "Prepare and maintain technical documentation for downstream providers per Article 53(1)(a) — including model architecture, training data summary, capabilities and limitations", deadline: "BEFORE_2026-08-02" },
+    { priority: "HIGH", action: "Conduct and document systemic risk self-assessment per Article 55 — determine if model meets the 10^25 FLOPs threshold and document the evaluation", deadline: "BEFORE_2026-08-02" },
+    { priority: "MEDIUM", action: "Implement incident reporting mechanism for serious incidents caused by downstream use of the model per Article 55(1)(c)", deadline: "ONGOING" },
+    { priority: "LOW", action: "Register model in EU GPAI model database once the registry is operational per Article 52", deadline: "ONGOING" },
+  ],
+  gaps: [
+    { articleId: "art51", articleNumber: "Article 51", gapLevel: "MEDIUM", gapTitle: "GPAI Classification Not Formally Documented", gapDescription: "The provider has not formally self-classified the model under Article 51 categories. A documented classification is required to determine which obligations apply.", actions: [{ priority: "MEDIUM", action: "Complete formal GPAI classification assessment and document the outcome", deadline: "BEFORE_2026-08-02" }], estimatedEffort: "LOW" },
+    { articleId: "art52", articleNumber: "Article 52", gapLevel: "HIGH", gapTitle: "Technical Documentation for Downstream Providers Incomplete", gapDescription: "No structured technical documentation package exists for downstream API integrators. Article 52 requires providers to make available sufficient information for deployers to understand capabilities, limitations, and safe integration conditions.", actions: [{ priority: "HIGH", action: "Create and publish technical documentation package covering model capabilities, known limitations, recommended use cases, and misuse risks", deadline: "BEFORE_2026-08-02" }], estimatedEffort: "MEDIUM" },
+    { articleId: "art53", articleNumber: "Article 53", gapLevel: "HIGH", gapTitle: "Copyright Policy Not Published", gapDescription: "No publicly available copyright policy documenting training data sources and compliance measures. This is a hard requirement for all GPAI providers under Article 53(1)(c), regardless of systemic risk classification.", actions: [{ priority: "HIGH", action: "Draft and publish a copyright compliance policy covering training data provenance, opt-out mechanisms, and rights clearance procedures", deadline: "BEFORE_2026-08-02" }], estimatedEffort: "MEDIUM" },
+    { articleId: "art55", articleNumber: "Article 55", gapLevel: "MEDIUM", gapTitle: "Systemic Risk Assessment Pending", gapDescription: "No documented self-assessment of systemic risk threshold (10^25 FLOPs). If the model meets this threshold, additional obligations apply including adversarial testing, cybersecurity measures, and incident reporting.", actions: [{ priority: "HIGH", action: "Conduct and document systemic risk self-assessment; if threshold is met, initiate adversarial testing programme", deadline: "BEFORE_2026-08-02" }, { priority: "MEDIUM", action: "Establish incident monitoring and reporting pipeline for serious incidents in downstream deployments", deadline: "ONGOING" }], estimatedEffort: "HIGH" },
+    { articleId: "art5", articleNumber: "Article 5", gapLevel: "LOW", gapTitle: "Prohibited Use Guardrails Present but Not Formally Documented", gapDescription: "The model likely has safety filters in place, but there is no formal documentation demonstrating that prohibited use cases are actively prevented at the API level.", actions: [{ priority: "LOW", action: "Document prohibited use case policy and technical enforcement measures at API gateway level", deadline: "BEFORE_2026-08-02" }], estimatedEffort: "LOW" },
+    { articleId: "art99", articleNumber: "Article 99", gapLevel: "LOW", gapTitle: "Penalty Exposure from Documentation Gaps", gapDescription: "Current documentation gaps under Articles 52 and 53 carry penalty exposure up to €15M or 3% of global turnover for GPAI providers.", actions: [{ priority: "MEDIUM", action: "Prioritise Art. 52 and 53 documentation to eliminate highest-exposure penalty risk", deadline: "BEFORE_2026-08-02" }], estimatedEffort: "LOW" },
   ],
 };
 
@@ -432,8 +464,8 @@ export default function App() {
     setError(""); setCurrentStep("classify");
   }
 
-  function loadShowcase() {
-    setResult(SHOWCASE_RESULT);
+  function loadShowcase(scenario = "high") {
+    setResult(scenario === "gpai" ? SHOWCASE_GPAI_RESULT : SHOWCASE_RESULT);
     setPhase("result");
   }
 
@@ -533,7 +565,7 @@ export default function App() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {[
                     { icon: '⚿', text: 'Paste your Anthropic API key — calls go directly from your browser to api.anthropic.com, never through our servers.' },
-                    { icon: '◈', text: 'Or try the example scenario instantly, no key required.' },
+                    { icon: '◈', text: 'Or try one of the example scenarios instantly, no key required.' },
                   ].map((item, i) => (
                     <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
                       <span style={{ color: C.gold, fontSize: 13, marginTop: 1, flexShrink: 0 }}>{item.icon}</span>
@@ -559,10 +591,15 @@ export default function App() {
               <span style={{ fontSize: 10, color: C.textMuted, letterSpacing: "0.1em", textTransform: "uppercase" }}>or</span>
               <div style={{ flex: 1, height: 1, background: C.border }} />
             </div>
-            <button style={{ display: "inline-flex", alignItems: "center", gap: 10, padding: "11px 22px", background: "transparent", border: `1px solid ${C.border}`, color: C.textMuted, fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase", cursor: "pointer", fontFamily: "inherit" }} onClick={loadShowcase}>
-              <span>◈</span><span>Try with example scenario</span>
-            </button>
-            <div style={{ fontSize: 11, color: C.textMuted, marginTop: 8, lineHeight: 1.6 }}>Preview a pre-computed analysis — no API key required.</div>
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+              <button style={{ display: "inline-flex", alignItems: "center", gap: 10, padding: "11px 22px", background: "transparent", border: `1px solid ${C.border}`, color: C.textMuted, fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase", cursor: "pointer", fontFamily: "inherit" }} onClick={() => loadShowcase("high")}>
+                <span>◈</span><span>Example: High-Risk AI (CV Screening)</span>
+              </button>
+              <button style={{ display: "inline-flex", alignItems: "center", gap: 10, padding: "11px 22px", background: "transparent", border: `1px solid ${C.blue}20`, color: C.blue, fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase", cursor: "pointer", fontFamily: "inherit" }} onClick={() => loadShowcase("gpai")}>
+                <span>◈</span><span>Example: GPAI Foundation Model</span>
+              </button>
+            </div>
+            <div style={{ fontSize: 11, color: C.textMuted, marginTop: 8, lineHeight: 1.6 }}>Preview pre-computed analyses — no API key required.</div>
             <div style={s.privacyNote}>
               <strong style={{ color: C.gold, letterSpacing: "0.05em", textTransform: "uppercase", fontSize: 10 }}>// Privacy & Security</strong>
               <div style={{ marginTop: 8 }}>
