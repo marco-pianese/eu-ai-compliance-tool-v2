@@ -98,10 +98,17 @@ function inferRiskTier(answers) {
   const isHighRisk = highRiskKeywords.some((k) => text.includes(k));
   const isLimited = limitedKeywords.some((k) => text.includes(k));
 
+  const gpaiKeywords = [
+    "general purpose", "foundation model", "gpai", "large language model",
+    "llm", "base model", "pretrained model",
+  ];
+  const isGpai = gpaiKeywords.some((k) => text.includes(k));
+
   if (isProhibited) return { tier: "UNACCEPTABLE", confidence: "HIGH", label: "Prohibited Practice", color: C.red };
   if (isHighRisk)   return { tier: "HIGH",          confidence: "HIGH", label: "High-Risk AI System", color: C.red };
+  if (isGpai)       return { tier: "GPAI",           confidence: "MEDIUM", label: "General Purpose AI (GPAI)", color: C.blue };
   if (isLimited)    return { tier: "LIMITED",        confidence: "MEDIUM", label: "Limited Risk", color: C.amber };
-  return               { tier: "MINIMAL",            confidence: "LOW", label: "Minimal Risk (unconfirmed)", color: C.green };
+  return                   { tier: "MINIMAL",        confidence: "LOW", label: "Minimal Risk (unconfirmed)", color: C.green };
 }
 
 function deriveArticleIds(riskTier, answers = {}) {
@@ -111,6 +118,7 @@ function deriveArticleIds(riskTier, answers = {}) {
     "llm", "base model", "pretrained model",
   ].some((k) => text.includes(k));
 
+  if (riskTier === "GPAI") return [...ARTICLES_BY_TIER.GPAI, "art5", "art99"];
   const ids = [...(ARTICLES_BY_TIER[riskTier] || ARTICLES_BY_TIER.MINIMAL)];
   if (isGpai) {
     ARTICLES_BY_TIER.GPAI.forEach((id) => { if (!ids.includes(id)) ids.push(id); });
