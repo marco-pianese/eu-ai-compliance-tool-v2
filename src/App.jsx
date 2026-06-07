@@ -453,6 +453,9 @@ export default function App() {
     if (rememberKey) { localStorage.setItem("anthropic_api_key", trimmed); }
     else { sessionStorage.setItem("anthropic_api_key", trimmed); }
     setKeyInput("");
+    // Phase 3.2 fix: reset showcase state when key is entered
+    setPhase("input");
+    setResult(null);
   }
 
   function handleClearKey() {
@@ -507,7 +510,17 @@ export default function App() {
 
   // ─── Phase 3.2: PDF Export ───────────────────────────────────────────────────
   async function exportToPDF() {
-    const { jsPDF } = await import("https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.es.min.js");
+    // Load jsPDF via UMD script tag (avoids Babel module resolution issues)
+    if (!window.jspdf) {
+      await new Promise((resolve, reject) => {
+        const script = document.createElement("script");
+        script.src = "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js";
+        script.onload = resolve;
+        script.onerror = reject;
+        document.head.appendChild(script);
+      });
+    }
+    const { jsPDF } = window.jspdf;
     const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
 
     const PW = 210; // page width mm
@@ -1040,15 +1053,10 @@ export default function App() {
               <div>Published: {EU_AI_ACT_META.published} · In force: {EU_AI_ACT_META.inForce}</div>
             </div>
 
-            <div style={{ display: "flex", gap: 16, flexWrap: "wrap", marginTop: "2.5rem", alignItems: "center" }}>
+            <div style={{ display: "flex", gap: 24, flexWrap: "wrap", marginTop: "2.5rem", alignItems: "center", borderTop: `1px solid ${C.border}`, paddingTop: "1.5rem" }}>
               <button style={s.resetBtn} onClick={reset}>← Run another analysis</button>
               <button style={{ ...s.resetBtn, color: C.red }} onClick={fullReset}>✕ Clear all and start over</button>
-              <button
-                style={{ fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase", padding: "9px 18px", background: C.goldFaint, border: `1px solid ${C.gold}`, color: C.gold, cursor: "pointer", fontFamily: "inherit", display: "inline-flex", alignItems: "center", gap: 8 }}
-                onClick={exportToPDF}
-              >
-                <span>↓</span><span>Export PDF Report</span>
-              </button>
+              <button style={{ ...s.resetBtn, color: C.gold, marginTop: 0 }} onClick={exportToPDF}>↓ Export PDF report</button>
             </div>
           </>
         )}
