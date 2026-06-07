@@ -884,7 +884,7 @@ complianceScore mapping:
 - COMPLIANT = 82–95 (full documentation, QMS, conformity assessment complete)
 
 Scoring rules — apply these strictly:
-1. Score floors by input richness: if Q4 and Q5 are both blank, score may fall in 5–30. If Q4 or Q5 contain any documented measures, score must be at least 30. If both Q4 and Q5 describe multiple concrete practices, score must be at least 40.
+1. Score floors by input richness: if Q4 and Q5 are both blank, score may fall in 5–30. If Q4 or Q5 contain any documented measures, score must be at least 30. If both Q4 and Q5 describe multiple concrete practices, score must be at least 40. If the system is already live in the EU with active users, treat this as a positive deployment signal worth at least +8 points above the tier floor, regardless of Q4 content.
 2. Reward declared evidence: treat each of the following as a positive signal worth +5–8 points above tier floor: formal risk assessment, bias testing, human override/escalation, audit logging, transparency notice, data retention policy, conformity assessment (initiated or complete), incident reporting pipeline, copyright policy, adversarial testing.
 3. Monotonicity guarantee: a response with more documented practices than a previous scenario must always score higher. Never assign the same score to minimal and complete inputs for the same system type.
 4. Penalise only what is absent: do not penalise for gaps that the user did not claim to have filled. Score what exists, not what is missing.
