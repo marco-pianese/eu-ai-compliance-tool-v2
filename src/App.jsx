@@ -229,7 +229,7 @@ const s = {
   card: { background: C.surface, border: `1px solid ${C.border}`, padding: "1.5rem", marginBottom: "1rem", boxShadow: "0 1px 3px rgba(0,0,0,0.05)" },
   cardLabel: { fontSize: 10, color: C.gold, letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: "0.75rem" },
   errorBox: { background: C.redFaint, border: `1px solid ${C.red}`, padding: "1rem", fontSize: 13, color: C.red, marginTop: "1rem" },
-  resetBtn: { fontSize: 11, color: C.textMuted, background: "none", border: "none", cursor: "pointer", letterSpacing: "0.08em", textTransform: "uppercase", fontFamily: "inherit", padding: 0, marginTop: "2.5rem", textDecoration: "underline" },
+  resetBtn: { fontSize: 11, color: C.textMuted, background: "none", border: "none", cursor: "pointer", letterSpacing: "0.08em", textTransform: "uppercase", fontFamily: "inherit", padding: 0, textDecoration: "underline" },
   footer: { borderTop: `1px solid ${C.border}`, padding: "1.25rem 2rem", display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 10, color: C.textMuted, letterSpacing: "0.06em", background: C.surface },
   sourceLink: { fontSize: 11, color: C.blue, textDecoration: "none", borderBottom: `1px solid rgba(29,78,216,0.3)`, paddingBottom: 1 },
   questionBlock: { marginBottom: "1.75rem" },
@@ -453,9 +453,12 @@ export default function App() {
     if (rememberKey) { localStorage.setItem("anthropic_api_key", trimmed); }
     else { sessionStorage.setItem("anthropic_api_key", trimmed); }
     setKeyInput("");
-    // Phase 3.2 fix: reset showcase state when key is entered
+    // Phase 3.2 fix: reset showcase state and clear form when key is entered
     setPhase("input");
     setResult(null);
+    setAnswers({ systemDescription: "", affectedPersons: "", dataSources: "", existingDocs: "", deploymentContext: "" });
+    setRiskPreview(null);
+    sessionStorage.removeItem(SESSION_KEY);
   }
 
   function handleClearKey() {
@@ -697,12 +700,13 @@ export default function App() {
       sectionTitle("03 — Critical Red Flags");
       result.redFlags.forEach((f) => {
         checkPage(10);
-        setColor(COLORS.red, "text");
         doc.setFont("courier", "bold");
-        doc.setFontSize(9);
-        doc.text("▶", ML, y);
-        body(f, COLORS.red, 9, 5);
-        y += 1;
+        doc.setFontSize(8.5);
+        setColor(COLORS.red, "text");
+        doc.text("[!]", ML, y);
+        y += 5;
+        body(f, COLORS.red, 9, 4);
+        y += 2;
       });
       y += 2;
     }
@@ -752,14 +756,17 @@ export default function App() {
       body(gap.gapDescription || "", COLORS.sub, 8.5, 2);
       if (gap.actions?.length > 0) {
         gap.actions.forEach((act) => {
-          checkPage(10);
+          checkPage(14);
           const aColor = priorityColor[act.priority] || COLORS.muted;
+          // Priority badge line
           doc.setFont("courier", "bold");
           doc.setFontSize(7.5);
           setColor(aColor, "text");
-          doc.text(`→ ${act.priority}`, ML + 2, y);
-          body(act.action || "", COLORS.sub, 8, 16);
-          y += 1;
+          doc.text(`-> [ ${act.priority} ]`, ML + 2, y);
+          y += 5;
+          // Action text on next line, indented
+          body(act.action || "", COLORS.sub, 8.5, 6);
+          y += 2;
         });
       }
       y += 4;
@@ -1053,7 +1060,7 @@ export default function App() {
               <div>Published: {EU_AI_ACT_META.published} · In force: {EU_AI_ACT_META.inForce}</div>
             </div>
 
-            <div style={{ display: "flex", gap: 24, flexWrap: "wrap", marginTop: "2.5rem", alignItems: "center", borderTop: `1px solid ${C.border}`, paddingTop: "1.5rem" }}>
+            <div style={{ display: "flex", gap: 24, flexWrap: "wrap", marginTop: "2rem", alignItems: "center", borderTop: `1px solid ${C.border}`, paddingTop: "1.25rem" }}>
               <button style={s.resetBtn} onClick={reset}>← Run another analysis</button>
               <button style={{ ...s.resetBtn, color: C.red }} onClick={fullReset}>✕ Clear all and start over</button>
               <button style={{ ...s.resetBtn, color: C.gold, marginTop: 0 }} onClick={exportToPDF}>↓ Export PDF report</button>
