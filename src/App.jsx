@@ -793,6 +793,72 @@ export default function App() {
   );
 }
 
+// ─── Phase 3.1: Tool Use Schema ──────────────────────────────────────────────
+const COMPLIANCE_TOOL = {
+  name: "submit_compliance_analysis",
+  description: "Submit the structured EU AI Act compliance gap analysis result.",
+  input_schema: {
+    type: "object",
+    properties: {
+      classification: {
+        type: "object",
+        properties: {
+          systemType:      { type: "string", description: "Brief technical classification of the AI system" },
+          riskCategory:    { type: "string", enum: ["UNACCEPTABLE", "HIGH", "LIMITED", "MINIMAL", "GPAI"] },
+          riskRationale:   { type: "string", description: "2-3 sentence explanation referencing the specific system" },
+          sector:          { type: "string", description: "Identified sector or domain" },
+          affectedPersons: { type: "string", description: "Who is impacted by the system outputs" },
+        },
+        required: ["systemType", "riskCategory", "riskRationale", "sector", "affectedPersons"],
+      },
+      complianceScore:  { type: "integer", minimum: 0, maximum: 100 },
+      overallReadiness: { type: "string", enum: ["NOT_COMPLIANT", "PARTIALLY_COMPLIANT", "LARGELY_COMPLIANT", "COMPLIANT"] },
+      executiveSummary: { type: "string", description: "3-4 sentence executive summary specific to this system" },
+      gaps: {
+        type: "array",
+        items: {
+          type: "object",
+          properties: {
+            articleId:      { type: "string" },
+            articleNumber:  { type: "string" },
+            gapLevel:       { type: "string", enum: ["HIGH", "MEDIUM", "LOW", "NONE"] },
+            gapTitle:       { type: "string" },
+            gapDescription: { type: "string" },
+            estimatedEffort:{ type: "string", enum: ["LOW", "MEDIUM", "HIGH"] },
+            actions: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  priority: { type: "string", enum: ["HIGH", "MEDIUM", "LOW"] },
+                  action:   { type: "string" },
+                  deadline: { type: "string", enum: ["IMMEDIATE", "BEFORE_2026-08-02", "ONGOING"] },
+                },
+                required: ["priority", "action", "deadline"],
+              },
+            },
+          },
+          required: ["articleId", "articleNumber", "gapLevel", "gapTitle", "gapDescription", "estimatedEffort", "actions"],
+        },
+      },
+      priorityActions: {
+        type: "array",
+        items: {
+          type: "object",
+          properties: {
+            priority: { type: "string", enum: ["HIGH", "MEDIUM", "LOW"] },
+            action:   { type: "string" },
+            deadline: { type: "string", enum: ["IMMEDIATE", "BEFORE_2026-08-02", "ONGOING"] },
+          },
+          required: ["priority", "action", "deadline"],
+        },
+      },
+      redFlags: { type: "array", items: { type: "string" } },
+    },
+    required: ["classification", "complianceScore", "overallReadiness", "executiveSummary", "gaps", "priorityActions", "redFlags"],
+  },
+};
+
 // ─── API Call ────────────────────────────────────────────────────────────────
 async function runGapAnalysis(answers, articleIds, apiKey) {
   const relevantArticles = articleIds
@@ -811,44 +877,15 @@ The user has provided a structured intake describing their system across five di
 
 Base every finding directly and specifically on the information provided. Do not make generic statements — reference the actual system described.
 
-Respond ONLY with valid JSON, no markdown, no backticks, exactly this structure:
-{
-  "classification": {
-    "systemType": "brief technical classification",
-    "riskCategory": "UNACCEPTABLE | HIGH | LIMITED | MINIMAL",
-    "riskRationale": "2-3 sentence explanation referencing the specific system",
-    "sector": "identified sector/domain",
-    "affectedPersons": "who is impacted"
-  },
-  "complianceScore": <integer 0-100>,
-  "executiveSummary": "3-4 sentence executive summary specific to this system",
-  "overallReadiness": "NOT_COMPLIANT | PARTIALLY_COMPLIANT | LARGELY_COMPLIANT | COMPLIANT",
-  "gaps": [
-    {
-      "articleId": "art5",
-      "articleNumber": "Article 5",
-      "gapLevel": "HIGH | MEDIUM | LOW | NONE",
-      "gapTitle": "brief gap title",
-      "gapDescription": "specific gap identified for this AI system, referencing the user's answers",
-      "actions": [
-        { "priority": "HIGH | MEDIUM | LOW", "action": "specific action required", "deadline": "IMMEDIATE | BEFORE_2026-08-02 | ONGOING" }
-      ],
-      "estimatedEffort": "LOW | MEDIUM | HIGH"
-    }
-  ],
-  "priorityActions": [
-    { "priority": "HIGH | MEDIUM | LOW", "action": "top priority action", "deadline": "IMMEDIATE | BEFORE_2026-08-02 | ONGOING" }
-  ],
-  "redFlags": ["critical issue 1", "critical issue 2"]
-}
-
 complianceScore mapping:
 - NOT_COMPLIANT = 5–20 (no documentation, no oversight, active violations)
 - PARTIALLY_COMPLIANT = 35–55 (some practices exist but major formal gaps remain)
 - LARGELY_COMPLIANT = 62–78 (solid foundations, minor procedural gaps)
 - COMPLIANT = 82–95 (full documentation, QMS, conformity assessment complete)
 
-Important: a system with documented practices, human oversight, and basic audits but missing formal frameworks should score 35–55, NOT below 30. Reserve scores below 20 for systems with zero compliance measures or active prohibited practices.`;
+Important: a system with documented practices, human oversight, and basic audits but missing formal frameworks should score 35–55, NOT below 30. Reserve scores below 20 for systems with zero compliance measures or active prohibited practices.
+
+Use the submit_compliance_analysis tool to return your structured findings.`;
 
   const userMessage = `AI System Intake:
 
@@ -875,10 +912,10 @@ Key Obligations: ${a.keyObligations.join("; ")}
 Application Date: ${a.applicationDate}
 `).join("\n---\n")}`;
 
-  // ─── Phase 2.2: Token Budget Log ─────────────────────────────────────────
+  // ─── Token Budget Log (Phase 2.2 — preserved) ────────────────────────────
   const charCount = userMessage.length;
   const estimatedTokens = Math.round(charCount / 4);
-  console.log(`[Phase 2.2] Tier: ${articleIds.length} articles | ${charCount} chars | ~${estimatedTokens} tokens`);
+  console.log(`[Phase 3.1] Tier: ${articleIds.length} articles | ${charCount} chars | ~${estimatedTokens} tokens`);
   // ─────────────────────────────────────────────────────────────────────────
 
   const response = await fetch("https://api.anthropic.com/v1/messages", {
@@ -893,6 +930,8 @@ Application Date: ${a.applicationDate}
       model: "claude-sonnet-4-20250514",
       max_tokens: 4000,
       system: systemPrompt,
+      tools: [COMPLIANCE_TOOL],
+      tool_choice: { type: "tool", name: "submit_compliance_analysis" },
       messages: [{ role: "user", content: userMessage }],
     }),
   });
@@ -904,7 +943,10 @@ Application Date: ${a.applicationDate}
     throw new Error(errData.error?.message || `API error: ${response.status}`);
   }
 
+  // ─── Phase 3.1: Tool Use Response Parsing ────────────────────────────────
   const data = await response.json();
-  const raw = data.content.map((i) => i.text || "").join("").replace(/```json|```/g, "").trim();
-  return JSON.parse(raw);
+  const toolUseBlock = data.content.find((b) => b.type === "tool_use");
+  if (!toolUseBlock) throw new Error("Unexpected API response: no tool_use block returned. Please retry.");
+  return toolUseBlock.input;
+  // ─────────────────────────────────────────────────────────────────────────
 }
