@@ -505,6 +505,269 @@ export default function App() {
     sessionStorage.removeItem(SESSION_KEY);
   }
 
+  // ─── Phase 3.2: PDF Export ───────────────────────────────────────────────────
+  async function exportToPDF() {
+    const { jsPDF } = await import("https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.es.min.js");
+    const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+
+    const PW = 210; // page width mm
+    const ML = 18; // margin left
+    const MR = 18; // margin right
+    const CW = PW - ML - MR; // content width
+    const PAGE_H = 297;
+    const MB = 20; // margin bottom
+    let y = 0;
+
+    const COLORS = {
+      gold:    [139, 105, 20],
+      text:    [17,  24,  39],
+      sub:     [55,  65,  81],
+      muted:   [107, 114, 128],
+      red:     [185, 28,  28],
+      amber:   [180, 83,  9],
+      blue:    [29,  78,  216],
+      green:   [22,  101, 52],
+      border:  [221, 226, 236],
+      bg:      [244, 246, 249],
+    };
+
+    function setColor(rgb, type = "text") {
+      if (type === "text") doc.setTextColor(...rgb);
+      else if (type === "fill") doc.setFillColor(...rgb);
+      else if (type === "draw") doc.setDrawColor(...rgb);
+    }
+
+    function checkPage(needed = 10) {
+      if (y + needed > PAGE_H - MB) {
+        doc.addPage();
+        y = 18;
+      }
+    }
+
+    function drawHRule(color = COLORS.border, lw = 0.2) {
+      doc.setLineWidth(lw);
+      setColor(color, "draw");
+      doc.line(ML, y, PW - MR, y);
+      y += 4;
+    }
+
+    function label(text, color = COLORS.gold) {
+      checkPage(8);
+      doc.setFont("courier", "bold");
+      doc.setFontSize(7.5);
+      setColor(color, "text");
+      doc.text(text.toUpperCase(), ML, y);
+      y += 5;
+    }
+
+    function body(text, color = COLORS.sub, size = 10, indent = 0) {
+      doc.setFont("courier", "normal");
+      doc.setFontSize(size);
+      setColor(color, "text");
+      const lines = doc.splitTextToSize(text, CW - indent);
+      lines.forEach((line) => {
+        checkPage(6);
+        doc.text(line, ML + indent, y);
+        y += 5;
+      });
+    }
+
+    function sectionTitle(text) {
+      checkPage(14);
+      y += 4;
+      label(`// ${text}`);
+      drawHRule(COLORS.border, 0.15);
+    }
+
+    function pill(text, color) {
+      doc.setFont("courier", "bold");
+      doc.setFontSize(7.5);
+      setColor(color, "text");
+      doc.text(`[ ${text} ]`, ML, y);
+      y += 5;
+    }
+
+    const readinessColor = {
+      NOT_COMPLIANT:       COLORS.red,
+      PARTIALLY_COMPLIANT: COLORS.amber,
+      LARGELY_COMPLIANT:   COLORS.blue,
+      COMPLIANT:           COLORS.green,
+    };
+    const readinessLabel = {
+      NOT_COMPLIANT:       "Non-Compliant",
+      PARTIALLY_COMPLIANT: "Partially Compliant",
+      LARGELY_COMPLIANT:   "Largely Compliant",
+      COMPLIANT:           "Compliant",
+    };
+    const priorityColor = { HIGH: COLORS.red, MEDIUM: COLORS.amber, LOW: COLORS.green };
+    const gapColor = { HIGH: COLORS.red, MEDIUM: COLORS.amber, LOW: COLORS.blue, NONE: COLORS.green };
+
+    // ── HEADER ──────────────────────────────────────────────────────────────
+    y = 18;
+    setColor(COLORS.gold, "fill");
+    doc.rect(ML, y - 5, CW, 0.8, "F");
+    y += 2;
+    doc.setFont("courier", "bold");
+    doc.setFontSize(18);
+    setColor(COLORS.text, "text");
+    doc.text("EU AI Compliance Tool", ML, y);
+    y += 7;
+    doc.setFont("courier", "normal");
+    doc.setFontSize(8.5);
+    setColor(COLORS.muted, "text");
+    doc.text(`Gap Analysis Report  ·  ${new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "long", year: "numeric" })}  ·  Regulation (EU) 2024/1689`, ML, y);
+    y += 3;
+    setColor(COLORS.gold, "fill");
+    doc.rect(ML, y, CW, 0.5, "F");
+    y += 8;
+
+    // ── CLASSIFICATION ───────────────────────────────────────────────────────
+    label("// 01 — System Classification");
+    doc.setFont("courier", "bold");
+    doc.setFontSize(13);
+    setColor(COLORS.text, "text");
+    const titleLines = doc.splitTextToSize(result.classification?.systemType || "", CW);
+    titleLines.forEach((l) => { doc.text(l, ML, y); y += 6; });
+    y += 2;
+
+    // Score box
+    checkPage(28);
+    setColor(COLORS.bg, "fill");
+    setColor(COLORS.border, "draw");
+    doc.setLineWidth(0.3);
+    doc.rect(ML, y, 38, 22, "FD");
+    doc.setFont("courier", "bold");
+    doc.setFontSize(26);
+    setColor(COLORS.gold, "text");
+    doc.text(String(result.complianceScore ?? 0), ML + 19, y + 13, { align: "center" });
+    doc.setFontSize(7);
+    setColor(COLORS.muted, "text");
+    doc.text("COMPLIANCE SCORE", ML + 19, y + 19, { align: "center" });
+
+    const rColor = readinessColor[result.overallReadiness] || COLORS.muted;
+    doc.setFont("courier", "bold");
+    doc.setFontSize(8);
+    setColor(rColor, "text");
+    doc.text(`[ ${(readinessLabel[result.overallReadiness] || "").toUpperCase()} ]`, ML + 43, y + 8);
+
+    doc.setFont("courier", "normal");
+    doc.setFontSize(8.5);
+    setColor(COLORS.sub, "text");
+    const metaItems = [
+      ["Risk Category", result.classification?.riskCategory],
+      ["Sector", result.classification?.sector],
+    ];
+    let mx = ML + 43;
+    metaItems.forEach(([k, v]) => {
+      if (!v) return;
+      doc.setFont("courier", "bold"); doc.setFontSize(7); setColor(COLORS.muted, "text"); doc.text(k.toUpperCase(), mx, y + 13);
+      doc.setFont("courier", "normal"); doc.setFontSize(8.5); setColor(COLORS.text, "text"); doc.text(String(v), mx, y + 18);
+      mx += 60;
+    });
+    y += 26;
+
+    // Rationale
+    doc.setFont("courier", "normal");
+    doc.setFontSize(8.5);
+    setColor(COLORS.muted, "text");
+    doc.text("RISK RATIONALE", ML, y); y += 4;
+    body(result.classification?.riskRationale || "", COLORS.sub, 9);
+    y += 2;
+
+    // ── EXECUTIVE SUMMARY ────────────────────────────────────────────────────
+    sectionTitle("02 — Executive Summary");
+    body(result.executiveSummary || "", COLORS.sub, 10);
+    y += 2;
+
+    // ── RED FLAGS ────────────────────────────────────────────────────────────
+    if (result.redFlags?.length > 0) {
+      sectionTitle("03 — Critical Red Flags");
+      result.redFlags.forEach((f) => {
+        checkPage(10);
+        setColor(COLORS.red, "text");
+        doc.setFont("courier", "bold");
+        doc.setFontSize(9);
+        doc.text("▶", ML, y);
+        body(f, COLORS.red, 9, 5);
+        y += 1;
+      });
+      y += 2;
+    }
+
+    // ── PRIORITY ACTIONS ─────────────────────────────────────────────────────
+    sectionTitle("04 — Priority Action Plan");
+    sortedActions.forEach((a, i) => {
+      checkPage(16);
+      const pColor = priorityColor[a.priority] || COLORS.muted;
+      doc.setFont("courier", "bold");
+      doc.setFontSize(7.5);
+      setColor(pColor, "text");
+      doc.text(`${String(i + 1).padStart(2, "0")}  [ ${a.priority} ]`, ML, y);
+      doc.setFont("courier", "normal");
+      doc.setFontSize(7.5);
+      setColor(COLORS.muted, "text");
+      doc.text(a.deadline?.replace(/_/g, " ") || "", PW - MR, y, { align: "right" });
+      y += 5;
+      body(a.action || "", COLORS.sub, 9, 4);
+      y += 2;
+    });
+
+    // ── ARTICLE-BY-ARTICLE GAPS ──────────────────────────────────────────────
+    sectionTitle("05 — Article-by-Article Gap Analysis");
+    sortedGaps.forEach((gap) => {
+      checkPage(22);
+      const gColor = gapColor[gap.gapLevel] || COLORS.muted;
+      // Article header bar
+      setColor(COLORS.bg, "fill");
+      doc.rect(ML, y - 4, CW, 8, "F");
+      doc.setFont("courier", "bold");
+      doc.setFontSize(9);
+      setColor(COLORS.text, "text");
+      doc.text(gap.articleNumber || "", ML + 2, y);
+      doc.setFontSize(7.5);
+      setColor(gColor, "text");
+      doc.text(`[ ${gap.gapLevel} ]`, ML + 28, y);
+      doc.setFont("courier", "normal");
+      doc.setFontSize(9);
+      setColor(COLORS.text, "text");
+      const titleStr = doc.splitTextToSize(gap.gapTitle || "", CW - 55)[0];
+      doc.text(titleStr, ML + 48, y);
+      doc.setFontSize(7.5);
+      setColor(COLORS.muted, "text");
+      doc.text(`Effort: ${gap.estimatedEffort || ""}`, PW - MR, y, { align: "right" });
+      y += 6;
+      body(gap.gapDescription || "", COLORS.sub, 8.5, 2);
+      if (gap.actions?.length > 0) {
+        gap.actions.forEach((act) => {
+          checkPage(10);
+          const aColor = priorityColor[act.priority] || COLORS.muted;
+          doc.setFont("courier", "bold");
+          doc.setFontSize(7.5);
+          setColor(aColor, "text");
+          doc.text(`→ ${act.priority}`, ML + 2, y);
+          body(act.action || "", COLORS.sub, 8, 16);
+          y += 1;
+        });
+      }
+      y += 4;
+      drawHRule(COLORS.border, 0.1);
+    });
+
+    // ── FOOTER ───────────────────────────────────────────────────────────────
+    const totalPages = doc.getNumberOfPages();
+    for (let p = 1; p <= totalPages; p++) {
+      doc.setPage(p);
+      doc.setFont("courier", "normal");
+      doc.setFontSize(7);
+      setColor(COLORS.muted, "text");
+      doc.text(`EU AI Compliance Tool v2  ·  eu-ai-compliance-tool-v2.vercel.app  ·  Page ${p} of ${totalPages}`, PW / 2, PAGE_H - 10, { align: "center" });
+    }
+
+    const systemSlug = (result.classification?.systemType || "analysis").toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 40);
+    doc.save(`eu-ai-compliance-${systemSlug}-${new Date().toISOString().slice(0, 10)}.pdf`);
+  }
+  // ─────────────────────────────────────────────────────────────────────────────
+
   const READINESS = {
     NOT_COMPLIANT:       { label: "Non-Compliant",       color: C.red },
     PARTIALLY_COMPLIANT: { label: "Partially Compliant", color: C.amber },
@@ -777,9 +1040,15 @@ export default function App() {
               <div>Published: {EU_AI_ACT_META.published} · In force: {EU_AI_ACT_META.inForce}</div>
             </div>
 
-            <div style={{ display: "flex", gap: 16, flexWrap: "wrap", marginTop: "2.5rem" }}>
+            <div style={{ display: "flex", gap: 16, flexWrap: "wrap", marginTop: "2.5rem", alignItems: "center" }}>
               <button style={s.resetBtn} onClick={reset}>← Run another analysis</button>
               <button style={{ ...s.resetBtn, color: C.red }} onClick={fullReset}>✕ Clear all and start over</button>
+              <button
+                style={{ fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase", padding: "9px 18px", background: C.goldFaint, border: `1px solid ${C.gold}`, color: C.gold, cursor: "pointer", fontFamily: "inherit", display: "inline-flex", alignItems: "center", gap: 8 }}
+                onClick={exportToPDF}
+              >
+                <span>↓</span><span>Export PDF Report</span>
+              </button>
             </div>
           </>
         )}
@@ -884,7 +1153,7 @@ complianceScore mapping:
 - COMPLIANT = 82–95 (full documentation, QMS, conformity assessment complete)
 
 Scoring rules — apply these strictly:
-1. Score floors by input richness: if Q4 and Q5 are both blank, score may fall in 5–30. If Q4 or Q5 contain any documented measures, score must be at least 30. If both Q4 and Q5 describe multiple concrete practices, score must be at least 40. If the system is already live in the EU with active users, treat this as a positive deployment signal worth at least +8 points above the tier floor, regardless of Q4 content.
+1. Score floors by input richness: if Q4 and Q5 are both blank, score may fall in 5–30. If Q4 or Q5 contain any documented measures, score must be at least 30. If both Q4 and Q5 describe multiple concrete practices, score must be at least 40.
 2. Reward declared evidence: treat each of the following as a positive signal worth +5–8 points above tier floor: formal risk assessment, bias testing, human override/escalation, audit logging, transparency notice, data retention policy, conformity assessment (initiated or complete), incident reporting pipeline, copyright policy, adversarial testing.
 3. Monotonicity guarantee: a response with more documented practices than a previous scenario must always score higher. Never assign the same score to minimal and complete inputs for the same system type.
 4. Penalise only what is absent: do not penalise for gaps that the user did not claim to have filled. Score what exists, not what is missing.
