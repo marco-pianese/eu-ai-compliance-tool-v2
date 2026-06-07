@@ -298,7 +298,7 @@ eu-ai-compliance-tool-v2/
 | 3.3 | Score calibration: system prompt tuning + 3×3 matrix | ✅ Done |
 | 2.3 | Hybrid RAG: Supabase pgvector + Voyage AI | 🔲 Backlog |
 | 4.1 | Eval framework: 9-scenario test suite + README | 🔲 Backlog |
-| 4.2 | README v2 + LinkedIn post | 🔲 Backlog |
+| 4.2 | README v2 | 🔲 Backlog |
 
 ---
 
