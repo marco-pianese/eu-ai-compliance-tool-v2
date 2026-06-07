@@ -883,7 +883,12 @@ complianceScore mapping:
 - LARGELY_COMPLIANT = 62–78 (solid foundations, minor procedural gaps)
 - COMPLIANT = 82–95 (full documentation, QMS, conformity assessment complete)
 
-Important: a system with documented practices, human oversight, and basic audits but missing formal frameworks should score 35–55, NOT below 30. Reserve scores below 20 for systems with zero compliance measures or active prohibited practices.
+Scoring rules — apply these strictly:
+1. Score floors by input richness: if Q4 and Q5 are both blank, score may fall in 5–30. If Q4 or Q5 contain any documented measures, score must be at least 30. If both Q4 and Q5 describe multiple concrete practices, score must be at least 40.
+2. Reward declared evidence: treat each of the following as a positive signal worth +5–8 points above tier floor: formal risk assessment, bias testing, human override/escalation, audit logging, transparency notice, data retention policy, conformity assessment (initiated or complete), incident reporting pipeline, copyright policy, adversarial testing.
+3. Monotonicity guarantee: a response with more documented practices than a previous scenario must always score higher. Never assign the same score to minimal and complete inputs for the same system type.
+4. Penalise only what is absent: do not penalise for gaps that the user did not claim to have filled. Score what exists, not what is missing.
+5. Reserve scores below 20 for systems with zero compliance measures or active prohibited practices.
 
 Use the submit_compliance_analysis tool to return your structured findings.`;
 
