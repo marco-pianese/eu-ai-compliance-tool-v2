@@ -1,26 +1,26 @@
-# EU AI Compliance Tool — v1
+# EU AI Compliance Tool — v2
 
 **Automated Gap Analysis · Regulation (EU) 2024/1689 — EU AI Act**
 
-→ **[Live Demo](https://eu-ai-compliance-tool-omega.vercel.app)**
-
-> **This is v1 — a functional baseline.** The architecture and knowledge base are intentionally kept simple to validate the core concept. A v2 with RAG-based knowledge retrieval, richer article coverage, and free-form system description is in active development.
-
----
-
-## Overview
-
-This is an **educational portfolio project** exploring the intersection of applied AI and regulatory compliance. It was built to demonstrate how large language models can be used to structure and automate complex legal analysis tasks — in this case, compliance assessment against the EU Artificial Intelligence Act (Regulation EU 2024/1689).
-
-The tool allows anyone to describe an AI system in plain language and receive a structured gap analysis in seconds, including a compliance score, prioritized action plan, and article-by-article breakdown — output that would typically require hours of manual legal and technical review.
+→ **[Live Demo](https://eu-ai-compliance-tool-v2.vercel.app)**
 
 > **Disclaimer**: This tool is intended for educational and portfolio purposes only. It does not constitute legal advice. For formal EU AI Act compliance assessments, always consult qualified legal counsel.
 
 ---
 
+## Overview
+
+This is an **applied AI portfolio project** exploring the intersection of large language models and regulatory compliance. It was built to demonstrate how LLMs can structure and automate complex legal analysis — in this case, compliance assessment against the EU Artificial Intelligence Act (Regulation EU 2024/1689).
+
+The tool allows anyone to describe an AI system across five structured dimensions and receive a full gap analysis in seconds: risk classification, compliance score, prioritized action plan, article-by-article breakdown, and a downloadable PDF report — output that would typically require hours of manual legal and technical review.
+
+v2 is a full rewrite of v1. Key improvements: BYOK architecture, 23-article corpus (vs 8 in v1), GPAI coverage (Art. 51–55), native tool_use output, score calibration across 9 validated scenarios, and client-side PDF export.
+
+---
+
 ## What it does
 
-The user selects a profile, describes their AI system in plain language, and receives a full compliance report structured in three sections:
+The user answers five structured questions about their AI system and receives a full compliance report in three sections.
 
 ### Section 1 — Executive Dashboard
 - **Compliance Score** (0–100) displayed as an animated gauge
@@ -32,81 +32,165 @@ The user selects a profile, describes their AI system in plain language, and rec
 ### Section 2 — Priority Action Plan
 - All required actions sorted by criticality (HIGH → MEDIUM → LOW)
 - Each action includes a priority badge and deadline (Immediate / Before Aug 2026 / Ongoing)
-- Designed to be directly actionable for compliance teams
 
 ### Section 3 — Article-by-Article Analysis
 - Collapsible cards for each relevant EU AI Act article
 - Each card shows: gap level, gap description, required actions, official EUR-Lex source link
 
+### PDF Export
+- One-click export of the full gap analysis as a structured PDF report
+- Includes all sections: classification, score, executive summary, red flags, action plan, article gaps
+- Filename auto-generated: `eu-ai-compliance-{system-slug}-{date}.pdf`
+
 ---
 
-## User Profiles
+## Five-Question Intake Form
 
-The analysis is tailored to three distinct use cases:
+The analysis is grounded in a structured intake across five dimensions:
 
-| Profile | Who it's for | Focus |
+| # | Question | Required |
 |---|---|---|
-| **Compliance Officer** | Organizations with internal AI systems | Internal gaps and remediation roadmap |
-| **AI Vendor** | Companies building AI products for the EU market | Certification requirements and go-to-market blockers |
-| **Procurement / Buyer** | Organizations evaluating AI purchases | Supplier risk and due diligence requirements |
+| 01 | What does your AI system do? | Yes |
+| 02 | Who is directly affected by the system's outputs? | Yes |
+| 03 | What data does the system process or was trained on? | Yes |
+| 04 | What documentation or governance processes already exist? | No |
+| 05 | Where and how is the system deployed? | No |
+
+Questions Q4 and Q5 are optional but significantly improve score accuracy. The more specific the answers, the more actionable the analysis.
+
+---
+
+## Risk Classification
+
+The tool automatically classifies the described system into one of five risk tiers based on keyword analysis of the intake answers:
+
+| Tier | Description | Examples |
+|---|---|---|
+| **UNACCEPTABLE** | Prohibited practices under Art. 5 | Social scoring, subliminal manipulation, predictive policing |
+| **HIGH** | Annex III high-risk systems | Recruitment AI, credit scoring, medical diagnosis, biometric |
+| **GPAI** | General Purpose AI models | Foundation models, LLMs, base models offered via API |
+| **LIMITED** | Transparency obligations only | Chatbots, virtual assistants, deepfake generation |
+| **MINIMAL** | No specific obligations | Most standard software with no significant AI risk |
+
+Classification is confirmed and refined by the Claude analysis in the gap analysis step.
 
 ---
 
 ## EU AI Act Articles Covered
 
-| Article | Topic | Status |
-|---|---|---|
-| **Art. 5** | Prohibited AI Practices | ✅ In force since Feb 2, 2025 |
-| **Art. 6 + Annex III** | High-Risk AI System Classification | Applies Aug 2, 2026 |
-| **Art. 9** | Risk Management System | Applies Aug 2, 2026 |
-| **Art. 10** | Data and Data Governance | Applies Aug 2, 2026 |
-| **Art. 13** | Transparency and Information Provision | Applies Aug 2, 2026 |
-| **Art. 14** | Human Oversight | Applies Aug 2, 2026 |
-| **Art. 17** | Quality Management System | Applies Aug 2, 2026 |
-| **Art. 99** | Penalties | Applies Aug 2, 2026 |
+v2 covers 23 articles, up from 8 in v1. Articles are assigned per risk tier and filtered client-side before the API call.
 
-All article summaries and key obligations are stored in `src/data/articles.js`. In v2, this static knowledge base will be replaced by a RAG pipeline pulling from EUR-Lex directly, enabling automatic coverage of new articles and regulatory updates.
+| Tier | Articles | Count |
+|---|---|---|
+| HIGH | Art. 5, 6, 9, 10, 13, 14, 15, 17, 18, 19, 20, 22, 25, 43, 47, 71, 72 | 17 |
+| LIMITED | Art. 5, 50, 52, 99 | 4 |
+| GPAI | Art. 51, 52, 53, 54, 55 | 4–5 |
+| MINIMAL | Art. 5 | 1 |
+
+GPAI article selection is additive: if GPAI keywords are detected in the intake, GPAI articles are appended to the standard tier set regardless of the primary tier.
+
+All article definitions are in `src/data/articles.js`. Each entry includes: number, title, summary, key obligations, application date, and EUR-Lex source URL.
 
 ---
 
 ## Compliance Score Calibration
 
-The scoring model was validated across 9 test scenarios covering all three profiles at low, medium, and high compliance levels:
+The scoring model was validated across a 3×3 calibration matrix covering three risk tiers at three input richness levels. All 9 cells were verified against expected ranges with monotonicity confirmed.
 
-| Compliance Level | Score Range | Example |
+| Scenario | Input minimo (Q1–Q3 only) | Input medio (Q1–Q5 partial) | Input completo (Q1–Q5 detailed) |
+|---|---|---|---|
+| HIGH — Recruitment AI | 15 ✓ | 45 ✓ | 68 ✓ |
+| LIMITED — Chatbot | 25 ✓ | 38 ✓ | 68 ✓ |
+| GPAI — Foundation Model | 15 ✓ | 42 ✓ | 72 ✓ |
+
+**Score mapping:**
+
+| Range | Label | Meaning |
 |---|---|---|
-| 🔴 Low | 5–25 | Predictive policing software with no documentation |
-| 🟡 Medium | 36–55 | Employee monitoring with basic docs but no formal QMS |
-| 🟢 High | 62–78 | Medical imaging tool with full conformity assessment |
+| 5–20 | Non-Compliant | No documentation, no oversight, possible violations |
+| 35–55 | Partially Compliant | Some practices exist, major formal gaps remain |
+| 62–78 | Largely Compliant | Solid foundations, minor procedural gaps |
+| 82–95 | Compliant | Full documentation, QMS, conformity assessment complete |
+
+**Scoring rules applied in system prompt:**
+1. Score floors by input richness: blank Q4+Q5 → may fall in 5–30; any documented measures → floor 30; multiple concrete practices → floor 40
+2. Each declared compliance signal (bias testing, human oversight, audit logging, copyright policy, etc.) adds +5–8 points above tier floor
+3. Monotonicity guarantee: richer input always scores higher within the same scenario
+4. Penalise only what is absent, not what was not claimed
+5. Live EU deployment with active users → additional +8 points above tier floor
 
 ---
 
 ## Architecture — BYOK (Bring Your Own Key)
 
-This tool uses a **BYOK architecture**: the user provides their own Anthropic API key, which is stored in the browser session only and used to call the Anthropic API directly. There is no server-side proxy and no backend.
+This tool uses a **BYOK architecture**: the user provides their own Anthropic API key, stored in the browser only, used to call the Anthropic API directly. There is no server-side proxy and no backend.
 
 ```
-┌─────────────────────────────────────────────────────┐
-│                    Browser (React SPA)               │
-│  - API key collected at gate UI                      │
-│  - Key stored in sessionStorage (or localStorage)    │
-│  - POST sent directly to api.anthropic.com           │
-└──────────────────────┬──────────────────────────────┘
+┌──────────────────────────────────────────────────────┐
+│                   Browser (React SPA)                 │
+│  - API key collected at gate UI                       │
+│  - Key stored in sessionStorage (or localStorage)     │
+│  - Intake answers stored in sessionStorage            │
+│  - Client-side risk pre-classification (keyword)      │
+│  - Client-side article filtering per risk tier        │
+│  - POST sent directly to api.anthropic.com            │
+└──────────────────────┬───────────────────────────────┘
                        │ POST /v1/messages
                        │ headers: x-api-key (USER key)
                        │          anthropic-version
                        │          anthropic-dangerous-direct-browser-access: true
                        ▼
-┌─────────────────────────────────────────────────────┐
-│                  Anthropic API                       │
-│  - claude-sonnet-4-20250514                          │
-│  - Returns structured JSON gap analysis              │
-└─────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────┐
+│                   Anthropic API                       │
+│  - claude-sonnet-4-20250514                           │
+│  - tool_use: submit_compliance_analysis               │
+│  - Returns structured JSON via toolUseBlock.input     │
+└──────────────────────────────────────────────────────┘
 ```
 
-**Privacy claim**: your API key never leaves your browser. There is no proxy, no server, no logging. You can verify this yourself in DevTools → Network: the only outbound call is directly to `api.anthropic.com`.
+**Privacy**: your API key never leaves your browser. No proxy, no server, no logging. Verify in DevTools → Network: the only outbound call is directly to `api.anthropic.com`.
 
-**Why BYOK?** Two reasons: (1) it eliminates any server-side cost exposure for the project owner; (2) it is a deliberate architectural signal — cost awareness and security-by-design are considerations in production AI systems.
+**Why BYOK?** Two reasons: (1) it eliminates server-side cost exposure for the project owner; (2) it is a deliberate architectural signal — cost awareness and security-by-design are standard considerations in production AI systems.
+
+---
+
+## Tool Use Output (Phase 3.1)
+
+v2 uses Claude's native `tool_use` API to guarantee structured output. The analysis is returned as a validated JSON object via `toolUseBlock.input` — no JSON parsing, no fragility.
+
+```js
+// API call forces tool_use response
+body: JSON.stringify({
+  model: "claude-sonnet-4-20250514",
+  max_tokens: 4000,
+  tools: [COMPLIANCE_TOOL],          // full JSON Schema definition
+  tool_choice: { type: "tool", name: "submit_compliance_analysis" },
+  messages: [{ role: "user", content: userMessage }],
+})
+
+// Response parsing — no JSON.parse needed
+const toolUseBlock = data.content.find((b) => b.type === "tool_use");
+return toolUseBlock.input;  // always a valid JS object
+```
+
+---
+
+## PDF Export (Phase 3.2)
+
+Client-side PDF export via jsPDF (UMD build). The export button appears in the result view and triggers a full document generation in the browser — no server call required.
+
+```js
+// jsPDF loaded via UMD script tag — avoids @babel/runtime resolution errors
+if (!window.jspdf) {
+  const script = document.createElement("script");
+  script.src = "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js";
+  document.head.appendChild(script);
+  await new Promise((resolve) => { script.onload = resolve; });
+}
+const { jsPDF } = window.jspdf;
+```
+
+**Note for contributors**: always use the UMD build from cdnjs. The ES module build from jsDelivr fails in browser due to unresolved `@babel/runtime` dependencies.
 
 ---
 
@@ -117,6 +201,8 @@ This tool uses a **BYOK architecture**: the user provides their own Anthropic AP
 | Frontend | React 18 + Vite |
 | AI Engine | Claude Sonnet (claude-sonnet-4-20250514) |
 | API Pattern | BYOK — direct browser → api.anthropic.com |
+| Output Format | Native tool_use (JSON Schema validated) |
+| PDF Export | jsPDF 2.5.1 (UMD, client-side) |
 | Hosting | Vercel (Hobby — free tier) |
 | Fonts | DM Mono + Playfair Display (Google Fonts) |
 
@@ -125,17 +211,17 @@ This tool uses a **BYOK architecture**: the user provides their own Anthropic AP
 ## How to Get an API Key
 
 1. Go to [console.anthropic.com](https://console.anthropic.com) and create an account
-2. Navigate to **API Keys** and generate a new key
-3. Set a monthly spending limit to cap costs
-4. Each analysis call costs approximately **$0.02–$0.05** with the current model and token settings
+2. Navigate to **API Keys** and generate a new key (name it `eu-ai-tool` for easy revocation)
+3. Set a monthly spending limit under **Settings → Limits** to cap costs
+4. Each analysis call costs approximately **$0.02–$0.05** depending on answer length
 
 ---
 
 ## How to Run Locally
 
 ```bash
-git clone https://github.com/marco-pianese/eu-ai-compliance-tool-v1
-cd eu-ai-compliance-tool-v1
+git clone https://github.com/marco-pianese/eu-ai-compliance-tool-v2
+cd eu-ai-compliance-tool-v2
 npm install
 npm run dev
 ```
@@ -150,9 +236,9 @@ The app will be available at `http://localhost:5173`. No environment variables n
 2. Go to [vercel.com](https://vercel.com) and create a new project
 3. Import your GitHub repository
 4. Deploy — Vercel will automatically detect the Vite framework
-5. No environment variables required (BYOK pattern — key lives in the browser, not on the server)
+5. No environment variables required (BYOK — key lives in the browser, not on the server)
 
-Every subsequent `git push` to `main` will trigger an automatic redeploy.
+Every subsequent `git push` to `main` triggers an automatic redeploy.
 
 ---
 
@@ -161,8 +247,8 @@ Every subsequent `git push` to `main` will trigger an automatic redeploy.
 To add or modify EU AI Act articles, edit `src/data/articles.js`. Each article follows this structure:
 
 ```js
-art_XX: {
-  id: "art_XX",
+artXX: {
+  id: "artXX",
   number: "Article XX",
   title: "Article Title",
   applicationDate: "YYYY-MM-DD",
@@ -173,24 +259,23 @@ art_XX: {
     "Obligation 1",
     "Obligation 2",
   ],
-  riskIfNonCompliant: "Fine description",
-  relevantProfiles: ["compliance", "vendor", "procurement"],
+  riskIfNonCompliant: "Fine / penalty description",
 }
 ```
 
-Then add the article ID to the relevant profile arrays in `ARTICLES_BY_PROFILE`.
+Then add the article ID to the relevant tier array in `ARTICLES_BY_TIER` (not `ARTICLES_BY_PROFILE`, which is kept for backwards compatibility only).
 
 ---
 
 ## Project Structure
 
 ```
-eu-ai-compliance-tool-v1/
+eu-ai-compliance-tool-v2/
 ├── src/
-│   ├── App.jsx             # Main application — UI, logic, API call
+│   ├── App.jsx             # Main application — UI, logic, API call, PDF export
 │   ├── main.jsx            # React entry point
 │   └── data/
-│       └── articles.js     # EU AI Act knowledge base (static, v1)
+│       └── articles.js     # EU AI Act knowledge base (23 articles + GPAI)
 ├── index.html              # HTML shell
 ├── package.json
 ├── vite.config.js
@@ -199,17 +284,21 @@ eu-ai-compliance-tool-v1/
 
 ---
 
-## Roadmap — What v2 will address
+## Roadmap
 
-The current v1 baseline has known limitations that v2 is designed to solve:
-
-| Limitation (v1) | Planned solution (v2) |
-|---|---|
-| Articles hard-coded in a static JS file | RAG pipeline pulling from EUR-Lex API |
-| No automatic update when new articles are published | Automated normative monitoring |
-| Limited article coverage (8 articles) | Full EU AI Act coverage including GPAI (Art. 51–56) |
-| Profile-based input only | Free-form system description with guided questions |
-| No export | PDF gap report export |
+| Phase | Description | Status |
+|---|---|---|
+| 1.1 | 5-question intake form | ✅ Done |
+| 1.2 | Client-side risk pre-classification | ✅ Done |
+| 1.3 | Session continuity via sessionStorage | ✅ Done |
+| 2.1 | Full corpus: 23 articles + GPAI Art. 51–55 | ✅ Done |
+| 2.2 | Client-side filter + token budget + GPAI showcase | ✅ Done |
+| 3.1 | Tool use output: replace JSON prompt with tool_use | ✅ Done |
+| 3.2 | PDF export: client-side via jsPDF | ✅ Done |
+| 3.3 | Score calibration: system prompt tuning + 3×3 matrix | ✅ Done |
+| 2.3 | Hybrid RAG: Supabase pgvector + Voyage AI | 🔲 Backlog |
+| 4.1 | Eval framework: 9-scenario test suite + README | 🔲 Backlog |
+| 4.2 | README v2 + LinkedIn post | 🔲 Backlog |
 
 ---
 
@@ -224,5 +313,5 @@ Published in the Official Journal of the European Union on July 12, 2024.
 
 ---
 
-*Built as an applied AI consulting portfolio project — v1, May 2026*
+*Built as an applied AI consulting portfolio project — v2, June 2026*
 *Author: Marco Pianese · [LinkedIn](https://www.linkedin.com/in/marco-pianese-40b3901b6/) · [GitHub](https://github.com/marco-pianese)*
