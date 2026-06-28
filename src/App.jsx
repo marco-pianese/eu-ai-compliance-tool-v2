@@ -88,27 +88,49 @@ function inferRiskTier(answers) {
     "education", "exam", "student", "school", "critical infrastructure",
     "border control", "migration", "asylum", "law enforcement", "police",
     "judicial", "court", "biometric", "facial recognition",
+    // Italian equivalents
+    "reclutamento", "assunzione", "selezione candidati", "candidato",
+    "punteggio credito", "prestito", "assicurazione", "medico", "salute",
+    "diagnosi", "istruzione", "esame", "studente", "scuola",
+    "infrastruttura critica", "controllo frontiere", "migrazione",
+    "forze dell'ordine", "polizia", "tribunale", "riconoscimento facciale",
   ];
   const limitedKeywords = [
     "chatbot", "virtual assistant", "customer service", "recommendation",
     "deepfake", "generated content", "synthetic",
+    // Italian equivalents
+    "assistente virtuale", "servizio clienti", "raccomandazione",
+    "contenuto generato", "sintetico",
+  ];
+
+  // Strong LIMITED signals — these override HIGH when the system is primarily
+  // a conversational agent or content tool, not a consequential decision system
+  const strongLimitedSignals = [
+    "chatbot", "virtual assistant", "assistente virtuale",
+    "deepfake", "generated content", "contenuto generato",
   ];
 
   const isProhibited = prohibitedKeywords.some((k) => text.includes(k));
   const isHighRisk = highRiskKeywords.some((k) => text.includes(k));
   const isLimited = limitedKeywords.some((k) => text.includes(k));
+  const isStrongLimited = strongLimitedSignals.some((k) => text.includes(k));
 
   const gpaiKeywords = [
     "general purpose", "foundation model", "gpai", "large language model",
     "llm", "base model", "pretrained model",
+    // Italian equivalents
+    "modello di uso generale", "modello fondazionale", "modello linguistico",
   ];
   const isGpai = gpaiKeywords.some((k) => text.includes(k));
 
   if (isProhibited) return { tier: "UNACCEPTABLE", confidence: "HIGH", label: "Prohibited Practice", color: C.red };
-  if (isHighRisk)   return { tier: "HIGH",          confidence: "HIGH", label: "High-Risk AI System", color: C.red };
-  if (isGpai)       return { tier: "GPAI",           confidence: "MEDIUM", label: "General Purpose AI (GPAI)", color: C.blue };
-  if (isLimited)    return { tier: "LIMITED",        confidence: "MEDIUM", label: "Limited Risk", color: C.amber };
-  return                   { tier: "MINIMAL",        confidence: "LOW", label: "Minimal Risk (unconfirmed)", color: C.green };
+  // If strong LIMITED signal present, LIMITED takes priority over HIGH
+  // (e.g. a medical chatbot is LIMITED, not a medical decision system)
+  if (isHighRisk && !isStrongLimited) return { tier: "HIGH", confidence: "HIGH", label: "High-Risk AI System", color: C.red };
+  if (isGpai)       return { tier: "GPAI",    confidence: "MEDIUM", label: "General Purpose AI (GPAI)", color: C.blue };
+  if (isLimited)    return { tier: "LIMITED", confidence: "MEDIUM", label: "Limited Risk", color: C.amber };
+  if (isHighRisk)   return { tier: "HIGH",    confidence: "HIGH",   label: "High-Risk AI System", color: C.red };
+  return                   { tier: "MINIMAL", confidence: "LOW",    label: "Minimal Risk (unconfirmed)", color: C.green };
 }
 
 function deriveArticleIds(riskTier, answers = {}) {
@@ -1168,11 +1190,12 @@ complianceScore mapping:
 - COMPLIANT = 82–95 (full documentation, QMS, conformity assessment complete)
 
 Scoring rules — apply these strictly:
-1. Score floors by input richness: if Q4 and Q5 are both blank, score may fall in 5–30. If Q4 or Q5 contain any documented measures, score must be at least 30. If both Q4 and Q5 describe multiple concrete practices, score must be at least 40.
-2. Reward declared evidence: treat each of the following as a positive signal worth +5–8 points above tier floor: formal risk assessment, bias testing, human override/escalation, audit logging, transparency notice, data retention policy, conformity assessment (initiated or complete), incident reporting pipeline, copyright policy, adversarial testing.
+1. Score floors by input richness: if Q4 and Q5 are both blank, score may fall in 5–30. If Q4 or Q5 contain any documented measures, score must be at least 30. If both Q4 and Q5 describe multiple concrete practices, score must be at least 40. ADDITIONAL FLOOR FOR HIGH AND GPAI TIER: if the system is HIGH or GPAI risk and Q4 or Q5 contain any documented measures (even partial), score must be at least 35. This reflects the higher baseline obligations for these tiers.
+2. Reward declared evidence: treat each of the following as a positive signal worth +5–8 points above tier floor: formal risk assessment, bias testing, human override/escalation, audit logging, transparency notice, data retention policy, conformity assessment (initiated or complete), incident reporting pipeline, copyright policy, adversarial testing. CEILING FOR GPAI TIER: even with full documentation across all signals, score must not exceed 75 for GPAI systems unless a systemic risk assessment is explicitly described as complete — GPAI systems face inherent regulatory uncertainty on the 10^25 FLOPs systemic risk threshold.
 3. Monotonicity guarantee: a response with more documented practices than a previous scenario must always score higher. Never assign the same score to minimal and complete inputs for the same system type.
 4. Penalise only what is absent: do not penalise for gaps that the user did not claim to have filled. Score what exists, not what is missing.
 5. Reserve scores below 20 for systems with zero compliance measures or active prohibited practices.
+6. Language independence: evaluate and classify the system based on its described characteristics regardless of the language used in the input. An AI system described in Italian must receive the same tier classification and scoring as an equivalent description in English.
 
 Use the submit_compliance_analysis tool to return your structured findings.`;
 
@@ -1216,7 +1239,7 @@ Application Date: ${a.applicationDate}
       "anthropic-dangerous-direct-browser-access": "true",
     },
     body: JSON.stringify({
-      model: "claude-sonnet-4-20250514",
+      model: "claude-sonnet-4-6",
       max_tokens: 4000,
       system: systemPrompt,
       tools: [COMPLIANCE_TOOL],

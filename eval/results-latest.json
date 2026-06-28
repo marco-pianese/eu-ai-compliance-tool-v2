@@ -1,0 +1,388 @@
+{
+  "runAt": "2026-06-28T18:37:02.390Z",
+  "scenariosRun": 20,
+  "passed": 14,
+  "failed": 6,
+  "results": [
+    {
+      "id": "A1",
+      "group": "A",
+      "description": "HIGH tier — input minimo (Q1–Q3 only)",
+      "pass": true,
+      "scorePass": true,
+      "tierPass": true,
+      "readyPass": true,
+      "score": 12,
+      "readiness": "NOT_COMPLIANT",
+      "inferredTier": "HIGH",
+      "apiTier": "HIGH",
+      "expectedTier": "HIGH",
+      "expectedScoreRange": [
+        5,
+        20
+      ],
+      "expectedReadiness": "NOT_COMPLIANT"
+    },
+    {
+      "id": "A2",
+      "group": "A",
+      "description": "HIGH tier — input medio (Q1–Q5 parziali)",
+      "pass": false,
+      "scorePass": false,
+      "tierPass": true,
+      "readyPass": false,
+      "score": 22,
+      "readiness": "NOT_COMPLIANT",
+      "inferredTier": "HIGH",
+      "apiTier": "HIGH",
+      "expectedTier": "HIGH",
+      "expectedScoreRange": [
+        35,
+        50
+      ],
+      "expectedReadiness": "PARTIALLY_COMPLIANT"
+    },
+    {
+      "id": "A3",
+      "group": "A",
+      "description": "HIGH tier — input completo (Q1–Q5 dettagliati)",
+      "pass": true,
+      "scorePass": true,
+      "tierPass": true,
+      "readyPass": true,
+      "score": 62,
+      "readiness": "LARGELY_COMPLIANT",
+      "inferredTier": "HIGH",
+      "apiTier": "HIGH",
+      "expectedTier": "HIGH",
+      "expectedScoreRange": [
+        62,
+        78
+      ],
+      "expectedReadiness": "LARGELY_COMPLIANT"
+    },
+    {
+      "id": "A4",
+      "group": "A",
+      "description": "LIMITED tier — input minimo (Q1–Q3 only)",
+      "pass": true,
+      "scorePass": true,
+      "tierPass": true,
+      "readyPass": true,
+      "score": 18,
+      "readiness": "NOT_COMPLIANT",
+      "inferredTier": "LIMITED",
+      "apiTier": "LIMITED",
+      "expectedTier": "LIMITED",
+      "expectedScoreRange": [
+        15,
+        25
+      ],
+      "expectedReadiness": "NOT_COMPLIANT"
+    },
+    {
+      "id": "A5",
+      "group": "A",
+      "description": "LIMITED tier — input medio (Q1–Q5 parziali)",
+      "pass": true,
+      "scorePass": true,
+      "tierPass": true,
+      "readyPass": true,
+      "score": 42,
+      "readiness": "PARTIALLY_COMPLIANT",
+      "inferredTier": "LIMITED",
+      "apiTier": "LIMITED",
+      "expectedTier": "LIMITED",
+      "expectedScoreRange": [
+        35,
+        55
+      ],
+      "expectedReadiness": "PARTIALLY_COMPLIANT"
+    },
+    {
+      "id": "A6",
+      "group": "A",
+      "description": "LIMITED tier — input completo (Q1–Q5 dettagliati)",
+      "pass": true,
+      "scorePass": true,
+      "tierPass": true,
+      "readyPass": true,
+      "score": 78,
+      "readiness": "LARGELY_COMPLIANT",
+      "inferredTier": "LIMITED",
+      "apiTier": "LIMITED",
+      "expectedTier": "LIMITED",
+      "expectedScoreRange": [
+        65,
+        80
+      ],
+      "expectedReadiness": "LARGELY_COMPLIANT"
+    },
+    {
+      "id": "A7",
+      "group": "A",
+      "description": "GPAI tier — input minimo (Q1–Q3 only)",
+      "pass": true,
+      "scorePass": true,
+      "tierPass": true,
+      "readyPass": true,
+      "score": 12,
+      "readiness": "NOT_COMPLIANT",
+      "inferredTier": "GPAI",
+      "apiTier": "GPAI",
+      "expectedTier": "GPAI",
+      "expectedScoreRange": [
+        10,
+        20
+      ],
+      "expectedReadiness": "NOT_COMPLIANT"
+    },
+    {
+      "id": "A8",
+      "group": "A",
+      "description": "GPAI tier — input medio (Q1–Q5 parziali)",
+      "pass": false,
+      "scorePass": false,
+      "tierPass": true,
+      "readyPass": false,
+      "score": 28,
+      "readiness": "NOT_COMPLIANT",
+      "inferredTier": "GPAI",
+      "apiTier": "GPAI",
+      "expectedTier": "GPAI",
+      "expectedScoreRange": [
+        35,
+        50
+      ],
+      "expectedReadiness": "PARTIALLY_COMPLIANT"
+    },
+    {
+      "id": "A9",
+      "group": "A",
+      "description": "GPAI tier — input completo (Q1–Q5 dettagliati)",
+      "pass": false,
+      "scorePass": false,
+      "tierPass": true,
+      "readyPass": true,
+      "score": 78,
+      "readiness": "LARGELY_COMPLIANT",
+      "inferredTier": "GPAI",
+      "apiTier": "GPAI",
+      "expectedTier": "GPAI",
+      "expectedScoreRange": [
+        60,
+        75
+      ],
+      "expectedReadiness": "LARGELY_COMPLIANT"
+    },
+    {
+      "id": "B1",
+      "group": "B",
+      "description": "Tier boundary — medical chatbot (LIMITED vs HIGH ambiguity)",
+      "pass": false,
+      "scorePass": true,
+      "tierPass": false,
+      "readyPass": false,
+      "score": 22,
+      "readiness": "NOT_COMPLIANT",
+      "inferredTier": "HIGH",
+      "apiTier": "HIGH",
+      "expectedTier": "LIMITED",
+      "expectedScoreRange": [
+        20,
+        45
+      ],
+      "expectedReadiness": "PARTIALLY_COMPLIANT"
+    },
+    {
+      "id": "B2",
+      "group": "B",
+      "description": "Tier boundary — HR recommendation engine (HIGH vs LIMITED ambiguity)",
+      "pass": false,
+      "scorePass": true,
+      "tierPass": false,
+      "readyPass": false,
+      "score": 28,
+      "readiness": "NOT_COMPLIANT",
+      "inferredTier": "HIGH",
+      "apiTier": "HIGH",
+      "expectedTier": "LIMITED",
+      "expectedScoreRange": [
+        25,
+        50
+      ],
+      "expectedReadiness": "PARTIALLY_COMPLIANT"
+    },
+    {
+      "id": "B3",
+      "group": "B",
+      "description": "Tier boundary — student performance prediction (HIGH vs MINIMAL ambiguity)",
+      "pass": true,
+      "scorePass": true,
+      "tierPass": true,
+      "readyPass": true,
+      "score": 42,
+      "readiness": "PARTIALLY_COMPLIANT",
+      "inferredTier": "HIGH",
+      "apiTier": "HIGH",
+      "expectedTier": "HIGH",
+      "expectedScoreRange": [
+        30,
+        55
+      ],
+      "expectedReadiness": "PARTIALLY_COMPLIANT"
+    },
+    {
+      "id": "B4",
+      "group": "B",
+      "description": "Tier boundary — deepfake detection tool (LIMITED vs MINIMAL ambiguity)",
+      "pass": true,
+      "scorePass": true,
+      "tierPass": true,
+      "readyPass": true,
+      "score": 52,
+      "readiness": "PARTIALLY_COMPLIANT",
+      "inferredTier": "LIMITED",
+      "apiTier": "LIMITED",
+      "expectedTier": "LIMITED",
+      "expectedScoreRange": [
+        30,
+        55
+      ],
+      "expectedReadiness": "PARTIALLY_COMPLIANT"
+    },
+    {
+      "id": "C1",
+      "group": "C",
+      "description": "GPAI edge — foundation model with specific vertical use case declared",
+      "pass": true,
+      "scorePass": true,
+      "tierPass": true,
+      "readyPass": true,
+      "score": 38,
+      "readiness": "PARTIALLY_COMPLIANT",
+      "inferredTier": "GPAI",
+      "apiTier": "GPAI",
+      "expectedTier": "GPAI",
+      "expectedScoreRange": [
+        25,
+        50
+      ],
+      "expectedReadiness": "PARTIALLY_COMPLIANT"
+    },
+    {
+      "id": "C2",
+      "group": "C",
+      "description": "GPAI edge — marginal LLM mention buried in longer description",
+      "pass": true,
+      "scorePass": true,
+      "tierPass": true,
+      "readyPass": true,
+      "score": 32,
+      "readiness": "PARTIALLY_COMPLIANT",
+      "inferredTier": "GPAI",
+      "apiTier": "GPAI",
+      "expectedTier": "GPAI",
+      "expectedScoreRange": [
+        20,
+        45
+      ],
+      "expectedReadiness": "PARTIALLY_COMPLIANT"
+    },
+    {
+      "id": "C3",
+      "group": "C",
+      "description": "GPAI edge — input minimo, no documentation, no deployment context",
+      "pass": true,
+      "scorePass": true,
+      "tierPass": true,
+      "readyPass": true,
+      "score": 12,
+      "readiness": "NOT_COMPLIANT",
+      "inferredTier": "GPAI",
+      "apiTier": "GPAI",
+      "expectedTier": "GPAI",
+      "expectedScoreRange": [
+        5,
+        20
+      ],
+      "expectedReadiness": "NOT_COMPLIANT"
+    },
+    {
+      "id": "D1",
+      "group": "D",
+      "description": "Score ceiling — HIGH tier with full compliance evidence declared",
+      "pass": true,
+      "scorePass": true,
+      "tierPass": true,
+      "readyPass": true,
+      "score": 88,
+      "readiness": "COMPLIANT",
+      "inferredTier": "HIGH",
+      "apiTier": "HIGH",
+      "expectedTier": "HIGH",
+      "expectedScoreRange": [
+        82,
+        95
+      ],
+      "expectedReadiness": "COMPLIANT"
+    },
+    {
+      "id": "D2",
+      "group": "D",
+      "description": "Score floor — HIGH tier with zero compliance, active risk signals",
+      "pass": true,
+      "scorePass": true,
+      "tierPass": true,
+      "readyPass": true,
+      "score": 8,
+      "readiness": "NOT_COMPLIANT",
+      "inferredTier": "HIGH",
+      "apiTier": "HIGH",
+      "expectedTier": "HIGH",
+      "expectedScoreRange": [
+        5,
+        20
+      ],
+      "expectedReadiness": "NOT_COMPLIANT"
+    },
+    {
+      "id": "E1",
+      "group": "E",
+      "description": "Stress test — minimal monosyllabic inputs",
+      "pass": true,
+      "scorePass": true,
+      "tierPass": true,
+      "readyPass": true,
+      "score": 22,
+      "readiness": "NOT_COMPLIANT",
+      "inferredTier": "HIGH",
+      "apiTier": "HIGH",
+      "expectedTier": "HIGH",
+      "expectedScoreRange": [
+        5,
+        35
+      ],
+      "expectedReadiness": "NOT_COMPLIANT"
+    },
+    {
+      "id": "E2",
+      "group": "E",
+      "description": "Stress test — full inputs in Italian",
+      "pass": false,
+      "scorePass": true,
+      "tierPass": false,
+      "readyPass": true,
+      "score": 38,
+      "readiness": "PARTIALLY_COMPLIANT",
+      "inferredTier": "MINIMAL",
+      "apiTier": "HIGH",
+      "expectedTier": "HIGH",
+      "expectedScoreRange": [
+        35,
+        65
+      ],
+      "expectedReadiness": "PARTIALLY_COMPLIANT"
+    }
+  ]
+}
