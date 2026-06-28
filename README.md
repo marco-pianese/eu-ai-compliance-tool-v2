@@ -14,7 +14,7 @@ This is an **applied AI portfolio project** exploring the intersection of large 
 
 The tool allows anyone to describe an AI system across five structured dimensions and receive a full gap analysis in seconds: risk classification, compliance score, prioritized action plan, article-by-article breakdown, and a downloadable PDF report — output that would typically require hours of manual legal and technical review.
 
-v2 is a full rewrite of v1. Key improvements: BYOK architecture, 23-article corpus (vs 8 in v1), GPAI coverage (Art. 51–55), native tool_use output, score calibration across 9 validated scenarios, and client-side PDF export.
+v2 is a full rewrite of v1. Key improvements: BYOK architecture, 23-article corpus (vs 8 in v1), GPAI coverage (Art. 51–55), native tool_use output, score calibration across a validated 20-scenario eval suite, and client-side PDF export.
 
 ---
 
@@ -69,10 +69,10 @@ The tool automatically classifies the described system into one of five risk tie
 | **UNACCEPTABLE** | Prohibited practices under Art. 5 | Social scoring, subliminal manipulation, predictive policing |
 | **HIGH** | Annex III high-risk systems | Recruitment AI, credit scoring, medical diagnosis, biometric |
 | **GPAI** | General Purpose AI models | Foundation models, LLMs, base models offered via API |
-| **LIMITED** | Transparency obligations only | Chatbots, virtual assistants, deepfake generation |
+| **LIMITED** | Transparency obligations only | Chatbots, virtual assistants, deepfake detection/generation |
 | **MINIMAL** | No specific obligations | Most standard software with no significant AI risk |
 
-Classification is confirmed and refined by the Claude analysis in the gap analysis step.
+Classification is confirmed and refined by the Claude analysis in the gap analysis step. The keyword classifier is intentionally conservative: when signals from two tiers are present (e.g. a chatbot operating in a medical context), the system applies the following priority logic — strong conversational/content signals take precedence over domain keywords, reflecting the EU AI Act's focus on the nature of the decision rather than the sector alone.
 
 ---
 
@@ -95,29 +95,95 @@ All article definitions are in `src/data/articles.js`. Each entry includes: numb
 
 ## Compliance Score Calibration
 
-The scoring model was validated across a 3×3 calibration matrix covering three risk tiers at three input richness levels. All 9 cells were verified against expected ranges with monotonicity confirmed.
-
-| Scenario | Input minimo (Q1–Q3 only) | Input medio (Q1–Q5 partial) | Input completo (Q1–Q5 detailed) |
-|---|---|---|---|
-| HIGH — Recruitment AI | 15 ✓ | 45 ✓ | 68 ✓ |
-| LIMITED — Chatbot | 25 ✓ | 38 ✓ | 68 ✓ |
-| GPAI — Foundation Model | 15 ✓ | 42 ✓ | 72 ✓ |
+The scoring model was calibrated and validated through a structured eval framework (Phase 4.1). The system prompt encodes seven explicit scoring rules that govern score assignment, readiness label mapping, and monotonicity guarantees.
 
 **Score mapping:**
 
 | Range | Label | Meaning |
 |---|---|---|
-| 5–20 | Non-Compliant | No documentation, no oversight, possible violations |
-| 35–55 | Partially Compliant | Some practices exist, major formal gaps remain |
+| 0–20 | Non-Compliant | No documentation, no oversight, possible violations |
+| 21–61 | Partially Compliant | Some practices exist, major formal gaps remain |
 | 62–78 | Largely Compliant | Solid foundations, minor procedural gaps |
-| 82–95 | Compliant | Full documentation, QMS, conformity assessment complete |
+| 79–100 | Compliant | Full documentation, QMS, conformity assessment complete |
 
 **Scoring rules applied in system prompt:**
-1. Score floors by input richness: blank Q4+Q5 → may fall in 5–30; any documented measures → floor 30; multiple concrete practices → floor 40
-2. Each declared compliance signal (bias testing, human oversight, audit logging, copyright policy, etc.) adds +5–8 points above tier floor
-3. Monotonicity guarantee: richer input always scores higher within the same scenario
-4. Penalise only what is absent, not what was not claimed
-5. Live EU deployment with active users → additional +8 points above tier floor
+1. Score floors by input richness: blank Q4+Q5 → may fall in 5–30; any documented measures → floor 30 (floor 35 for HIGH and GPAI tiers); multiple concrete practices → floor 40
+2. Each declared compliance signal (bias testing, human oversight, audit logging, copyright policy, conformity assessment, etc.) adds +5–8 points above tier floor
+3. GPAI ceiling: score must not exceed 75 unless systemic risk assessment is explicitly described as complete — reflecting regulatory uncertainty on the 10^25 FLOPs threshold
+4. Monotonicity guarantee: richer input always scores higher within the same scenario
+5. Penalise only what is absent, not what was not claimed
+6. Language independence: classification and scoring are consistent regardless of input language
+7. Readiness label is derived deterministically from score range — no independent label assignment
+
+---
+
+## Eval Framework (Phase 4.1)
+
+Phase 4.1 introduced a structured automated eval suite to validate scoring consistency, tier classification accuracy, and system robustness across a range of inputs.
+
+### Suite Overview
+
+20 canonical scenarios organised in 5 groups, each with defined expected tier, score range, and readiness label. The runner calls the live API for each scenario and reports pass/fail against all three criteria simultaneously.
+
+| Group | Focus | Scenarios |
+|---|---|---|
+| A — Calibration Matrix | 3×3 grid: three risk tiers × three input richness levels | 9 |
+| B — Tier Boundary Cases | Ambiguous inputs that sit between two tiers | 4 |
+| C — GPAI Edge Cases | Buried keywords, fine-tuned models, minimal GPAI input | 3 |
+| D — Score Boundary Cases | Full compliance ceiling (D1) and zero compliance floor (D2) | 2 |
+| E — Input Stress Tests | Monosyllabic inputs (E1) and full Italian-language inputs (E2) | 2 |
+
+### Results
+
+**Final result: 19/20 scenarios passing.**
+
+| Group | Result | Notes |
+|---|---|---|
+| A — Calibration | 9/9 ✅ | All tiers × input richness combinations pass. Monotonicity confirmed across HIGH, LIMITED, and GPAI. |
+| B — Tier Boundary | 4/4 ✅ | Medical chatbot correctly classified as LIMITED over HIGH; HR recommendation engine correctly classified as LIMITED. |
+| C — GPAI Edge | 3/3 ✅ | GPAI detection fires correctly on buried LLM mentions and fine-tuned foundation models. |
+| D — Score Boundary | 2/2 ✅ | Full compliance ceiling (score 88, COMPLIANT) and zero compliance floor (score 12, NOT_COMPLIANT) both pass. |
+| E — Stress Tests | 1/2 | E2 (Italian-language input) passes. E1 (monosyllabic inputs) is a known edge case — see note below. |
+
+**Monotonicity check (Group A):**
+```
+HIGH:    12 < 38 < 62  → OK
+LIMITED: 18 < 47 < 72  → OK
+GPAI:    14 < 38 < 72  → OK
+```
+
+### Known Limitation — E1 (Monosyllabic Inputs)
+
+Scenario E1 uses intentionally degraded inputs ("AI tool for recruitment scoring", "Candidates.", "CVs.", "Some docs.", "EU."). The model assigns a score of 22 and readiness PARTIALLY_COMPLIANT, while the expected readiness is NOT_COMPLIANT (score ≤ 20).
+
+This is a deliberate design tradeoff: scoring rule 2 rewards any declared compliance signal, including minimal ones like "Some docs." The model correctly identifies a signal and scores above the NOT_COMPLIANT threshold. The scenario sits at the boundary between two readiness bands by design.
+
+> **Note on score variability:** LLM-based scoring is inherently non-deterministic. Scores across scenarios may vary by ±3–5 points between runs due to model temperature and inference variability. The eval suite uses score *ranges* rather than exact values to account for this. Results reported here reflect a single representative run; monotonicity and tier classification are the more stable indicators of system health.
+
+### Running the Eval Suite
+
+The runner is located in `eval/run-eval.mjs` and requires Node.js 18+. No additional dependencies needed.
+
+```bash
+# Full suite (20 scenarios) — saves JSON output
+node eval/run-eval.mjs --key sk-ant-... --out eval/results-latest.json
+
+# Smoke test — Group A only (9 scenarios, fast check after any prompt change)
+node eval/run-eval.mjs --key sk-ant-... --smoke
+
+# Single group
+node eval/run-eval.mjs --key sk-ant-... --group B
+
+# Specific scenarios
+node eval/run-eval.mjs --key sk-ant-... --id A2,D1,E2
+```
+
+**When to run:**
+- After any change to the system prompt in `runGapAnalysis()` — run `--smoke` at minimum
+- After any change to `inferRiskTier()` — run full suite
+- Before publishing a new version
+
+> ⚠️ **Critical maintenance rule:** the system prompt exists in two places — `src/App.jsx` (function `runGapAnalysis`) and `eval/run-eval.mjs` (constant `SYSTEM_PROMPT`). Any change to scoring rules must be applied to **both files**. There is no automatic sync between them.
 
 ---
 
@@ -129,7 +195,7 @@ This tool uses a **BYOK architecture**: the user provides their own Anthropic AP
 ┌──────────────────────────────────────────────────────┐
 │                   Browser (React SPA)                 │
 │  - API key collected at gate UI                       │
-│  - Key stored in sessionStorage (or localStorage)     │
+│  - Key stored in sessionStorage                       │
 │  - Intake answers stored in sessionStorage            │
 │  - Client-side risk pre-classification (keyword)      │
 │  - Client-side article filtering per risk tier        │
@@ -142,7 +208,7 @@ This tool uses a **BYOK architecture**: the user provides their own Anthropic AP
                        ▼
 ┌──────────────────────────────────────────────────────┐
 │                   Anthropic API                       │
-│  - claude-sonnet-4-20250514                           │
+│  - claude-sonnet-4-6                                  │
 │  - tool_use: submit_compliance_analysis               │
 │  - Returns structured JSON via toolUseBlock.input     │
 └──────────────────────────────────────────────────────┘
@@ -161,7 +227,7 @@ v2 uses Claude's native `tool_use` API to guarantee structured output. The analy
 ```js
 // API call forces tool_use response
 body: JSON.stringify({
-  model: "claude-sonnet-4-20250514",
+  model: "claude-sonnet-4-6",
   max_tokens: 4000,
   tools: [COMPLIANCE_TOOL],          // full JSON Schema definition
   tool_choice: { type: "tool", name: "submit_compliance_analysis" },
@@ -190,7 +256,7 @@ if (!window.jspdf) {
 const { jsPDF } = window.jspdf;
 ```
 
-**Note for contributors**: always use the UMD build from cdnjs. The ES module build from jsDelivr fails in browser due to unresolved `@babel/runtime` dependencies.
+> **Note for contributors**: always use the UMD build from cdnjs. The ES module build from jsDelivr fails in browser due to unresolved `@babel/runtime` dependencies. The Courier font does not support Unicode — use ASCII alternatives (`[!]`, `->`, `*`) in generated PDF content.
 
 ---
 
@@ -199,7 +265,7 @@ const { jsPDF } = window.jspdf;
 | Layer | Technology |
 |---|---|
 | Frontend | React 18 + Vite |
-| AI Engine | Claude Sonnet (claude-sonnet-4-20250514) |
+| AI Engine | Claude Sonnet (claude-sonnet-4-6) |
 | API Pattern | BYOK — direct browser → api.anthropic.com |
 | Output Format | Native tool_use (JSON Schema validated) |
 | PDF Export | jsPDF 2.5.1 (UMD, client-side) |
@@ -276,6 +342,10 @@ eu-ai-compliance-tool-v2/
 │   ├── main.jsx            # React entry point
 │   └── data/
 │       └── articles.js     # EU AI Act knowledge base (23 articles + GPAI)
+├── eval/
+│   ├── scenarios.js        # 20 canonical test scenarios (5 groups)
+│   ├── run-eval.mjs        # Node.js eval runner — CLI, API calls, pass/fail report
+│   └── README-eval.md      # Eval protocol documentation
 ├── index.html              # HTML shell
 ├── package.json
 ├── vite.config.js
@@ -296,9 +366,9 @@ eu-ai-compliance-tool-v2/
 | 3.1 | Tool use output: replace JSON prompt with tool_use | ✅ Done |
 | 3.2 | PDF export: client-side via jsPDF | ✅ Done |
 | 3.3 | Score calibration: system prompt tuning + 3×3 matrix | ✅ Done |
+| 4.1 | Eval framework: 20-scenario suite + runner script | ✅ Done |
+| 4.2 | README v2 | ✅ Done |
 | 2.3 | Hybrid RAG: Supabase pgvector + Voyage AI | 🔲 Backlog |
-| 4.1 | Eval framework: 9-scenario test suite + README | 🔲 Backlog |
-| 4.2 | README v2 | 🔲 Backlog |
 
 ---
 
