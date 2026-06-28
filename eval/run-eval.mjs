@@ -80,24 +80,30 @@ function inferRiskTier(answers) {
     "border control", "migration", "asylum", "law enforcement", "police",
     "judicial", "court", "biometric", "facial recognition",
     // Italian equivalents
-    "reclutamento", "assunzione", "selezione candidati", "candidato",
-    "punteggio credito", "prestito", "assicurazione", "medico", "salute",
-    "diagnosi", "istruzione", "esame", "studente", "scuola",
-    "infrastruttura critica", "controllo frontiere", "migrazione",
-    "forze dell'ordine", "polizia", "tribunale", "riconoscimento facciale",
+    "reclutamento", "assunzione", "selezione del personale", "selezione candidati",
+    "candidato", "candidati", "curriculum", "punteggio credito", "prestito",
+    "assicurazione", "medico", "salute", "diagnosi", "istruzione", "esame",
+    "studente", "studenti", "scuola", "infrastruttura critica",
+    "controllo frontiere", "migrazione", "forze dell'ordine", "polizia",
+    "tribunale", "riconoscimento facciale",
   ];
   const limitedKeywords = [
-    "chatbot", "virtual assistant", "customer service", "recommendation",
+    "chatbot", "virtual assistant", "conversational ai", "conversational assistant",
+    "customer service", "recommendation system", "recommends", "suggests relevant",
     "deepfake", "generated content", "synthetic",
     // Italian equivalents
-    "assistente virtuale", "servizio clienti", "raccomandazione",
-    "contenuto generato", "sintetico",
+    "assistente virtuale", "assistente conversazionale", "servizio clienti",
+    "sistema di raccomandazione", "contenuto generato", "sintetico",
   ];
-  // Strong LIMITED signals — override HIGH when system is primarily conversational
+
+  // Strong LIMITED signals: conversational/content tools that override HIGH
   const strongLimitedSignals = [
-    "chatbot", "virtual assistant", "assistente virtuale",
+    "chatbot", "conversational ai", "conversational assistant",
+    "virtual assistant", "assistente virtuale", "assistente conversazionale",
+    "recommendation system", "suggests relevant", "sistema di raccomandazione",
     "deepfake", "generated content", "contenuto generato",
   ];
+
   const gpaiKeywords = [
     "general purpose", "foundation model", "gpai", "large language model",
     "llm", "base model", "pretrained model",
@@ -112,7 +118,7 @@ function inferRiskTier(answers) {
   const isStrongLimited = strongLimitedSignals.some(k => text.includes(k));
 
   if (isProhibited) return "UNACCEPTABLE";
-  // Strong LIMITED signals take priority over HIGH (e.g. medical chatbot → LIMITED)
+  // Strong LIMITED signals override HIGH (e.g. medical chatbot → LIMITED)
   if (isHighRisk && !isStrongLimited) return "HIGH";
   if (isGpai)       return "GPAI";
   if (isLimited)    return "LIMITED";
@@ -161,6 +167,7 @@ Scoring rules — apply these strictly:
 4. Penalise only what is absent: do not penalise for gaps that the user did not claim to have filled. Score what exists, not what is missing.
 5. Reserve scores below 20 for systems with zero compliance measures or active prohibited practices.
 6. Language independence: evaluate and classify the system based on its described characteristics regardless of the language used in the input. An AI system described in Italian must receive the same tier classification and scoring as an equivalent description in English.
+7. overallReadiness MUST match complianceScore exactly — use this mandatory mapping: score 0–20 → NOT_COMPLIANT; score 21–61 → PARTIALLY_COMPLIANT; score 62–78 → LARGELY_COMPLIANT; score 79–100 → COMPLIANT. Never assign a readiness label that contradicts the score.
 
 Use the submit_compliance_analysis tool to return your structured findings.`;
 
